@@ -1,0 +1,38 @@
+[
+  {
+    "q": ["hours", "when are you open", "availability"],
+    "a": "We’re available 7 days a week by appointment. Same-day slots are often open—text or book to check today."
+  },
+  {
+    "q": ["service area", "where do you operate", "locations", "myrtle beach", "horry"],
+    "a": "We serve all of Horry County: Myrtle Beach, North Myrtle, Conway, Surfside, Garden City, Murrells Inlet, Socastee, Carolina Forest, Little River, Aynor, Loris—and nearby."
+  },
+  {
+    "q": ["pricing", "how much", "cost", "quote"],
+    "a": "Pricing depends on the job. Quick ballpark: standard cleaning starts around $120, mobile detailing from $89. Ask for a fast custom quote."
+  },
+  {
+    "q": ["mobile detailing", "detail", "car wash", "interior", "exterior"],
+    "a": "Mobile Detailing: thorough exterior wash, wheels/tires, windows, interior vacuum/wipe, and add-ons like shampoo and odor treatment. We come to you."
+  },
+  {
+    "q": ["cleaning", "house cleaning", "deep clean", "move out", "airbnb"],
+    "a": "Cleaning Services: standard, deep, move-in/out, and Airbnb turnover. We bring supplies and can accommodate special requests."
+  },
+  {
+    "q": ["book", "schedule", "appointment", "how do i book"],
+    "a": "To book: click the chat button and say “Book me for ___,” or use our 15-minute call link (we’ll add it here), or text us—whatever’s easiest."
+  },
+  {
+    "q": ["payment", "pay", "cards", "cash", "zelle", "venmo"],
+    "a": "We accept cards, cash, and most popular apps. Invoices/receipts provided."
+  },
+  {
+    "q": ["license", "insured", "bonded", "background"],
+    "a": "Yes—licensed and insured. Happy to provide documentation upon request."
+  },
+  {
+    "q": ["specials", "discounts", "promo"],
+    "a": "Ask about first-time client specials and bundle discounts for regular service."
+  }
+]
