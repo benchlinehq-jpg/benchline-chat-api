@@ -189,4 +189,16 @@ def capture_lead(lead: Lead):
 
     log("lead_in", name=name, email=email, source=source)
     return {"ok": True}
+# --- Download leads CSV (quick admin endpoint) ---
+from fastapi.responses import PlainTextResponse
+
+@app.get("/api/leads.csv")
+def get_leads_csv():
+    path = os.getenv("LEADS_CSV", "/tmp/leads.csv")
+    if not os.path.isfile(path):
+        # Return header only if no file yet
+        return PlainTextResponse("ts_utc,name,email,message,source\n", media_type="text/csv")
+    with open(path, "r", encoding="utf-8") as f:
+        data = f.read()
+    return PlainTextResponse(data, media_type="text/csv")
 
