@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import requests
 
 # ---------------- CORS (locked down) ----------------
 ALLOWED = os.getenv("ALLOWED_ORIGINS", "")
@@ -188,6 +189,15 @@ def capture_lead(lead: Lead):
         log("lead_fallback", ts=ts, name=name, email=email, message=msg, source=source)
 
     log("lead_in", name=name, email=email, source=source)
+        # Send to Zapier webhook if configured
+    try:
+        hook = os.getenv("LEAD_WEBHOOK", "").strip()
+        if hook:
+            payload = {"ts": ts, "name": name, "email": email, "message": msg, "source": source}
+            requests.post(hook, json=payload, timeout=5)
+    except Exception as e:
+        log("lead_webhook_error", err=str(e))
+
     return {"ok": True}
 # --- Download leads CSV (quick admin endpoint) ---
 from fastapi.responses import PlainTextResponse
