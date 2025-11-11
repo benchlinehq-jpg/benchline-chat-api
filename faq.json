@@ -20,12 +20,12 @@
     "a": "Cleaning Services: standard, deep, move-in/out, and Airbnb turnover. We bring supplies and can accommodate special requests."
   },
   {
-    "q": ["book", "schedule", "appointment", "how do i book"],
-    "a": "To book: click the chat button and say “Book me for ___,” or use our 15-minute call link (we’ll add it here), or text us—whatever’s easiest."
-  },
-  {
-    "q": ["payment", "pay", "cards", "cash", "zelle", "venmo"],
-    "a": "We accept cards, cash, and most popular apps. Invoices/receipts provided."
+  "q": ["book", "schedule", "appointment", "call", "consult"],
+  "a": "Book a quick 15-minute call here:https://calendly.com/benchlinehq/30min"
+}
+{,
+  "q": ["payment", "pay", "cards", "cash", "zelle", "venmo"],
+  "a": "We accept cards, cash, and most popular apps. Invoices/receipts provided."
   },
   {
     "q": ["license", "insured", "bonded", "background"],
