@@ -153,3 +153,40 @@ def chat(req: ChatRequest):
         reply = rule_based_answer(last_user) + "\n\n[Note: model fallback]"
         log("chat_out", reply=reply, mode="fallback_error")
         return JSONResponse({"reply": reply})
+        # ---------------- Lead capture ----------------
+import csv, datetime, re
+from pydantic import BaseModel, EmailStr
+
+class Lead(BaseModel):
+    name: str
+    email: EmailStr
+    message: str | None = ""
+    source: str | None = "chat-widget"
+
+LEADS_PATH = os.getenv("LEADS_CSV", "/tmp/leads.csv")
+
+@app.post("/api/lead")
+def capture_lead(lead: Lead):
+    # Basic sanity/clean
+    name = lead.name.strip()
+    email = lead.email.strip().lower()
+    msg = (lead.message or "").strip()
+    source = (lead.source or "chat-widget").strip()
+    ts = datetime.datetime.utcnow().isoformat() + "Z"
+
+    # Append to CSV (creates file if missing)
+    file_exists = os.path.isfile(LEADS_PATH)
+    try:
+        with open(LEADS_PATH, "a", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            if not file_exists:
+                w.writerow(["ts_utc", "name", "email", "message", "source"])
+            w.writerow([ts, name, email, msg, source])
+    except Exception as e:
+        log("lead_write_error", err=str(e))
+        # Still log to stdout so you never lose the lead
+        log("lead_fallback", ts=ts, name=name, email=email, message=msg, source=source)
+
+    log("lead_in", name=name, email=email, source=source)
+    return {"ok": True}
+
