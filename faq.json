@@ -13,14 +13,14 @@
   },
   {
     "q": ["mobile detailing", "detail", "car wash", "interior", "exterior"],
-    "a": "Mobile Detailing: thorough exterior wash, wheels/tires, windows, interior vacuum/wipe, and add-ons like shampoo and odor treatment. We come to you."
+    "a": "Mobile Detailing: exterior wash, wheels/tires, windows, interior vacuum/wipe, and add-ons like shampoo and odor treatment. We come to you."
   },
   {
     "q": ["cleaning", "house cleaning", "deep clean", "move out", "airbnb"],
     "a": "Cleaning Services: standard, deep, move-in/out, and Airbnb turnover. We bring supplies and can accommodate special requests."
   },
   {
-    "q": ["book", "schedule", "appointment", "call", "consult"],
+    "q": ["book", "schedule", "appointment", "call", "consult", "15 minute"],
     "a": "Book a quick 15-minute call here: https://calendly.com/benchlinehq/30min"
   },
   {
@@ -34,5 +34,27 @@
   {
     "q": ["specials", "discounts", "promo"],
     "a": "Ask about first-time client specials and bundle discounts for regular service."
+  },
+
+  // ---- NEW 5 INTENTS ----
+  {
+    "q": ["same day", "today", "soonest", "how fast", "urgent"],
+    "a": "Often yes—same-day or next-day is possible depending on route openings. Tell me your location and ideal time and I’ll check the first available slot."
+  },
+  {
+    "q": ["supplies", "do you bring supplies", "equipment", "do i need anything", "vacuum", "cleaners"],
+    "a": "We bring all standard supplies and equipment. If you have preferred products (e.g., hypoallergenic), we’re happy to use them—just let us know."
+  },
+  {
+    "q": ["how long", "duration", "time", "how many hours"],
+    "a": "Most standard cleanings take 2–3 hours for an average home; mobile detailing usually runs 1.5–3 hours per vehicle depending on package."
+  },
+  {
+    "q": ["recurring", "weekly", "biweekly", "monthly", "subscription", "discount"],
+    "a": "Recurring discounts are available for weekly, biweekly, and monthly plans. Tell me your cadence and we’ll quote your best rate."
+  },
+  {
+    "q": ["reschedule", "cancel", "cancellation", "policy", "change time"],
+    "a": "You can reschedule or cancel—no fee with 24+ hours’ notice. Same-day changes may incur a small fee to cover routing."
   }
 ]
