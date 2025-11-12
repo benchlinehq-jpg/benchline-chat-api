@@ -1,15 +1,20 @@
 [
   {
+    "q": ["pricing", "price", "prices", "what are your prices", "rates", "packages", "how much", "cost", "pricing / prices overview"],
+    "a": "Ballpark pricing: • Standard home cleaning from ~$120 • Deep clean from ~$180 • Mobile detailing from ~$89 • Full detail from ~$199. For an exact quote, tell me your city plus: (A) Cleaning → bedrooms & bathrooms, or (B) Detailing → vehicle type + interior/exterior."
+  },
+  {
+    "q": ["get quote", "quick quote", "quick quote please", "estimate", "free quote", "can i get a quote", "quote request"],
+    "a": "Sure—fast quote. Reply with one:\nA) Cleaning (standard/deep/move-out): city + bedrooms/bathrooms\nB) Detailing (interior/exterior/full): city + vehicle (sedan/SUV/truck)\nI’ll reply with a ballpark + first available slot."
+  },
+
+  {
     "q": ["hours", "when are you open", "availability"],
     "a": "We’re available 7 days a week by appointment. Same-day slots are often open—text or book to check today."
   },
   {
-    "q": ["service area", "where do you operate", "locations", "myrtle beach", "horry"],
+    "q": ["service area", "where do you operate", "locations", "myrtle beach", "horry", "horry county"],
     "a": "We serve all of Horry County: Myrtle Beach, North Myrtle, Conway, Surfside, Garden City, Murrells Inlet, Socastee, Carolina Forest, Little River, Aynor, Loris—and nearby."
-  },
-  {
-    "q": ["pricing", "how much", "cost", "quote"],
-    "a": "Pricing depends on the job. Quick ballpark: standard cleaning starts around $120, mobile detailing from $89. Ask for a fast custom quote."
   },
   {
     "q": ["mobile detailing", "detail", "car wash", "interior", "exterior"],
@@ -20,8 +25,16 @@
     "a": "Cleaning Services: standard, deep, move-in/out, and Airbnb turnover. We bring supplies and can accommodate special requests."
   },
   {
-    "q": ["book", "schedule", "appointment", "call", "consult", "15 minute"],
+    "q": ["supplies", "do you bring supplies", "equipment", "do i need anything", "vacuum", "cleaners", "products", "what products do you use", "chemicals", "eco", "pet safe"],
+    "a": "We bring all standard supplies and pro-grade, surface-safe products. We can use eco/pet-safe options or your preferred brands—just let us know."
+  },
+  {
+    "q": ["book", "schedule", "appointment", "call", "consult", "15 minute", "calendly"],
     "a": "Book a quick 15-minute call here: https://calendly.com/benchlinehq/30min"
+  },
+  {
+    "q": ["how long", "duration", "time", "how many hours"],
+    "a": "Most standard cleanings take 2–3 hours for an average home; mobile detailing usually runs 1.5–3 hours per vehicle depending on package."
   },
   {
     "q": ["payment", "pay", "cards", "cash", "zelle", "venmo"],
@@ -32,24 +45,12 @@
     "a": "Yes—licensed and insured. Happy to provide documentation upon request."
   },
   {
-    "q": ["specials", "discounts", "promo"],
-    "a": "Ask about first-time client specials and bundle discounts for regular service."
+    "q": ["specials", "discounts", "promo", "recurring", "weekly", "biweekly", "monthly", "subscription"],
+    "a": "Recurring discounts are available for weekly, biweekly, and monthly plans. Ask about first-time client specials and bundles."
   },
   {
     "q": ["same day", "today", "soonest", "how fast", "urgent"],
     "a": "Often yes—same-day or next-day is possible depending on route openings. Tell me your location and ideal time and I’ll check the first available slot."
-  },
-  {
-    "q": ["supplies", "do you bring supplies", "equipment", "do i need anything", "vacuum", "cleaners"],
-    "a": "We bring all standard supplies and equipment. If you have preferred products (e.g., hypoallergenic), we’re happy to use them—just let us know."
-  },
-  {
-    "q": ["how long", "duration", "time", "how many hours"],
-    "a": "Most standard cleanings take 2–3 hours for an average home; mobile detailing usually runs 1.5–3 hours per vehicle depending on package."
-  },
-  {
-    "q": ["recurring", "weekly", "biweekly", "monthly", "subscription", "discount"],
-    "a": "Recurring discounts are available for weekly, biweekly, and monthly plans. Tell me your cadence and we’ll quote your best rate."
   },
   {
     "q": ["reschedule", "cancel", "cancellation", "policy", "change time"],
