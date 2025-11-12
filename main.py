@@ -154,50 +154,43 @@ def chat(req: ChatRequest):
         reply = rule_based_answer(last_user) + "\n\n[Note: model fallback]"
         log("chat_out", reply=reply, mode="fallback_error")
         return JSONResponse({"reply": reply})
-        # ---------------- Lead capture ----------------
-import csv, datetime, re
-from pydantic import BaseModel, EmailStr
-
-class Lead(BaseModel):
-    name: str
-    email: EmailStr
-    message: str | None = ""
-    source: str | None = "chat-widget"
-
-LEADS_PATH = os.getenv("LEADS_CSV", "/tmp/leads.csv")
+# ---------------- Lead capture ----------------
+import csv, datetime, os, requests
 
 @app.post("/api/lead")
 def capture_lead(lead: Lead):
-    # Basic sanity/clean
-    name = lead.name.strip()
-    email = lead.email.strip().lower()
-    msg = (lead.message or "").strip()
+    # Basic sanitize / normalize
+    name   = (lead.name or "").strip()
+    email  = (lead.email or "").strip().lower()
+    msg    = (lead.message or "").strip()
     source = (lead.source or "chat-widget").strip()
-    ts = datetime.datetime.utcnow().isoformat() + "Z"
-# Basic spam guard
-bad_emails = {"test@test.com", "example@example.com"}
-if len(name) < 2 or "http://" in name.lower() or "https://" in name.lower():
-    return JSONResponse({"ok": False, "error": "invalid_name"}, status_code=400)
-if "@" not in email or email in bad_emails or email.endswith("@example.com"):
-    return JSONResponse({"ok": False, "error": "invalid_email"}, status_code=400)
-if msg and len(msg) > 1000:
-    msg = msg[:1000]
+    ts     = datetime.datetime.utcnow().isoformat() + "Z"
 
-    # Append to CSV (creates file if missing)
-    file_exists = os.path.isfile(LEADS_PATH)
-    try:
-        with open(LEADS_PATH, "a", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            if not file_exists:
-                w.writerow(["ts_utc", "name", "email", "message", "source"])
-            w.writerow([ts, name, email, msg, source])
-    except Exception as e:
-        log("lead_write_error", err=str(e))
-        # Still log to stdout so you never lose the lead
-        log("lead_fallback", ts=ts, name=name, email=email, message=msg, source=source)
+    # ---- Spam guard ----
+    bad_emails = {"test@test.com", "example@example.com"}
+    if len(name) < 2 or "http://" in name.lower() or "https://" in name.lower():
+        return JSONResponse(content={"ok": False, "error": "invalid_name"}, status_code=400)
+    if "@" not in email or email in bad_emails or email.endswith("@example.com"):
+        return JSONResponse(content={"ok": False, "error": "invalid_email"}, status_code=400)
+    if msg and len(msg) > 1000:
+        msg = msg[:1000]
 
-    log("lead_in", name=name, email=email, source=source)
-        # Send to Zapier webhook if configured
+    # ---- CSV write (kept as backup; skip if LEADS_CSV is empty) ----
+    LEADS_PATH = os.getenv("LEADS_CSV", "/tmp/leads.csv")
+    if LEADS_PATH:
+        file_exists = os.path.isfile(LEADS_PATH)
+        try:
+            with open(LEADS_PATH, "a", newline="", encoding="utf-8") as f:
+                w = csv.writer(f)
+                if not file_exists:
+                    w.writerow(["ts_utc", "name", "email", "message", "source"])
+                w.writerow([ts, name, email, msg, source])
+        except Exception as e:
+            log("lead_write_error", err=str(e))
+            # Fallback: still log the data so it isn't lost
+            log("lead_fallback", ts=ts, name=name, email=email, message=msg, source=source)
+
+    # ---- Zapier webhook (optional) ----
     try:
         hook = os.getenv("LEAD_WEBHOOK", "").strip()
         if hook:
@@ -206,17 +199,6 @@ if msg and len(msg) > 1000:
     except Exception as e:
         log("lead_webhook_error", err=str(e))
 
+    log("lead_in", name=name, email=email, source=source)
     return {"ok": True}
-# --- Download leads CSV (quick admin endpoint) ---
-from fastapi.responses import PlainTextResponse
-
-@app.get("/api/leads.csv")
-def get_leads_csv():
-    path = os.getenv("LEADS_CSV", "/tmp/leads.csv")
-    if not os.path.isfile(path):
-        # Return header only if no file yet
-        return PlainTextResponse("ts_utc,name,email,message,source\n", media_type="text/csv")
-    with open(path, "r", encoding="utf-8") as f:
-        data = f.read()
-    return PlainTextResponse(data, media_type="text/csv")
 
