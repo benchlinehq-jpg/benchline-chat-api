@@ -1,12 +1,24 @@
-import os, json, sys, time
+# ========== Benchline Chat API (FastAPI) ==========
+import os, sys, time, json, csv, datetime
 from typing import List, Literal
+
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import requests
 
-# ---------------- CORS (locked down) ----------------
+# Optional: OpenAI client (only used if OPENAI_API_KEY is set)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_MODEL   = (os.getenv("OPENAI_MODEL", "gpt-4o-mini") or "gpt-4o-mini").strip()
+client = None
+if OPENAI_API_KEY:
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=OPENAI_API_KEY)
+    except Exception:
+        client = None
+
+# ---------------- App + CORS ----------------
 ALLOWED = os.getenv("ALLOWED_ORIGINS", "")
 ALLOW_ORIGINS = [o.strip() for o in ALLOWED.split(",") if o.strip()]
 if not ALLOW_ORIGINS:
@@ -21,7 +33,7 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 
-# ---------------- Tiny rate limit ----------------
+# ---------------- Tiny per-IP rate limit ----------------
 BUCKET = {}  # ip -> [timestamps]
 
 @app.middleware("http")
@@ -30,10 +42,9 @@ async def rate_limit(request: Request, call_next):
         ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or request.client.host
     except Exception:
         ip = "unknown"
-
     now = time.time()
     window = 60.0
-    limit = 20  # 20 req/min/IP
+    limit = 20
 
     q = BUCKET.get(ip, [])
     q = [t for t in q if now - t < window]
@@ -41,7 +52,6 @@ async def rate_limit(request: Request, call_next):
         raise HTTPException(status_code=429, detail="Too Many Requests")
     q.append(now)
     BUCKET[ip] = q
-
     return await call_next(request)
 
 # ---------------- Logging helper ----------------
@@ -50,12 +60,19 @@ def log(event: str, **kw):
 
 # ---------------- Models ----------------
 Role = Literal["user", "assistant"]
+
 class Msg(BaseModel):
     role: Role
     content: str
 
 class ChatRequest(BaseModel):
     messages: List[Msg]
+
+class Lead(BaseModel):
+    name: str
+    email: str           # keep simple (no extra dependency)
+    message: str | None = ""
+    source: str | None = "chat-widget"
 
 # ---------------- Health ----------------
 @app.get("/healthz")
@@ -64,36 +81,22 @@ def healthz():
 
 # ---------------- Rule-based fallback ----------------
 def rule_based_answer(user_text: str) -> str:
-    t = user_text.strip().lower()
+    t = (user_text or "").strip().lower()
     if t in {"hi", "hello", "hey"}: return "Hey! I’m Benchline Bot. Try asking: what's 2+2?"
     if "2+2" in t or "2 + 2" in t:  return "2 + 2 = 4."
     if "name" in t:                 return "I’m Benchline Bot."
     if "hours" in t:                return "I’m awake 24/7 🙂"
     return f"You said: “{user_text}”. (Test reply—backend working!)"
 
-# ---------------- OpenAI (optional) ----------------
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
-OPENAI_MODEL   = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
-client = None
-if OPENAI_API_KEY:
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=OPENAI_API_KEY)
-    except Exception:
-        client = None
-
 # ---------------- FAQ fast-answer layer ----------------
-# Put a file named faq.json next to main.py (already added in your repo).
-# Format: [{ "q": ["keyword1","keyword2",...], "a": "Answer text" }, ...]
 HERE = os.path.dirname(os.path.abspath(__file__))
 FAQ_PATH = os.path.join(HERE, "faq.json")
-FAQ_MIN_SCORE = int(os.getenv("FAQ_MIN_SCORE", "1"))  # require at least 1 keyword match
+FAQ_MIN_SCORE = int(os.getenv("FAQ_MIN_SCORE", "1"))
 
 def load_faq():
     try:
         with open(FAQ_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
-            # Normalize keywords to lowercase
             for item in data:
                 item["q"] = [str(x).lower().strip() for x in item.get("q", [])]
                 item["a"] = str(item.get("a", "")).strip()
@@ -105,17 +108,15 @@ def load_faq():
 FAQ = load_faq()
 
 def faq_answer(user_text: str) -> str | None:
-    """Return the best FAQ answer if keywords match; else None."""
     if not FAQ:
         return None
-    t = user_text.lower()
+    t = (user_text or "").lower()
     best = None
     best_score = 0
     for item in FAQ:
         score = sum(1 for kw in item["q"] if kw and kw in t)
         if score > best_score:
-            best_score = score
-            best = item
+            best_score, best = score, item
     if best and best_score >= FAQ_MIN_SCORE and best.get("a"):
         return best["a"]
     return None
@@ -123,17 +124,16 @@ def faq_answer(user_text: str) -> str | None:
 # ---------------- Chat endpoint ----------------
 @app.post("/api/chat")
 def chat(req: ChatRequest):
-    # get last user message
     last_user = next((m.content for m in reversed(req.messages) if m.role == "user"), "").strip()
     log("chat_in", user=last_user)
 
-    # 1) Try FAQ instant answer
+    # 1) FAQ instant
     fa = faq_answer(last_user)
     if fa:
         log("chat_out", reply=fa, mode="faq")
         return JSONResponse({"reply": fa})
 
-    # 2) Try OpenAI (if configured), else fallback rules
+    # 2) OpenAI or fallback
     if not client:
         reply = rule_based_answer(last_user)
         log("chat_out", reply=reply, mode="fallback")
@@ -154,19 +154,24 @@ def chat(req: ChatRequest):
         reply = rule_based_answer(last_user) + "\n\n[Note: model fallback]"
         log("chat_out", reply=reply, mode="fallback_error")
         return JSONResponse({"reply": reply})
+
 # ---------------- Lead capture ----------------
-import csv, datetime, os, requests
+# CSV backup path (leave empty to disable file writes)
+LEADS_PATH = os.getenv("LEADS_CSV", "/tmp/leads.csv")
+
+# Optional Zapier webhook (set in Render env as LEAD_WEBHOOK)
+import requests  # ensure requests==2.32.3 in requirements.txt
 
 @app.post("/api/lead")
 def capture_lead(lead: Lead):
-    # Basic sanitize / normalize
+    # Normalize
     name   = (lead.name or "").strip()
     email  = (lead.email or "").strip().lower()
     msg    = (lead.message or "").strip()
     source = (lead.source or "chat-widget").strip()
     ts     = datetime.datetime.utcnow().isoformat() + "Z"
 
-    # ---- Spam guard ----
+    # Spam guard
     bad_emails = {"test@test.com", "example@example.com"}
     if len(name) < 2 or "http://" in name.lower() or "https://" in name.lower():
         return JSONResponse(content={"ok": False, "error": "invalid_name"}, status_code=400)
@@ -175,11 +180,10 @@ def capture_lead(lead: Lead):
     if msg and len(msg) > 1000:
         msg = msg[:1000]
 
-    # ---- CSV write (kept as backup; skip if LEADS_CSV is empty) ----
-    LEADS_PATH = os.getenv("LEADS_CSV", "/tmp/leads.csv")
+    # CSV backup (if enabled)
     if LEADS_PATH:
-        file_exists = os.path.isfile(LEADS_PATH)
         try:
+            file_exists = os.path.isfile(LEADS_PATH)
             with open(LEADS_PATH, "a", newline="", encoding="utf-8") as f:
                 w = csv.writer(f)
                 if not file_exists:
@@ -187,10 +191,9 @@ def capture_lead(lead: Lead):
                 w.writerow([ts, name, email, msg, source])
         except Exception as e:
             log("lead_write_error", err=str(e))
-            # Fallback: still log the data so it isn't lost
             log("lead_fallback", ts=ts, name=name, email=email, message=msg, source=source)
 
-    # ---- Zapier webhook (optional) ----
+    # Zapier webhook
     try:
         hook = os.getenv("LEAD_WEBHOOK", "").strip()
         if hook:
@@ -202,3 +205,12 @@ def capture_lead(lead: Lead):
     log("lead_in", name=name, email=email, source=source)
     return {"ok": True}
 
+# --- Download leads CSV (quick admin endpoint) ---
+@app.get("/api/leads.csv")
+def get_leads_csv():
+    path = LEADS_PATH
+    if not path or not os.path.isfile(path):
+        return PlainTextResponse("ts_utc,name,email,message,source\n", media_type="text/csv")
+    with open(path, "r", encoding="utf-8") as f:
+        data = f.read()
+    return PlainTextResponse(data, media_type="text/csv")
