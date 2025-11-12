@@ -21,7 +21,7 @@
   },
   {
     "q": ["book", "schedule", "appointment", "call", "consult"],
-    "a": "Book a quick 15-minute call here: https://calendly.com/your-link"
+    "a": "Book a quick 15-minute call here: https://calendly.com/benchlinehq/30min"
   },
   {
     "q": ["payment", "pay", "cards", "cash", "zelle", "venmo"],
