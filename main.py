@@ -174,6 +174,14 @@ def capture_lead(lead: Lead):
     msg = (lead.message or "").strip()
     source = (lead.source or "chat-widget").strip()
     ts = datetime.datetime.utcnow().isoformat() + "Z"
+# Basic spam guard
+bad_emails = {"test@test.com", "example@example.com"}
+if len(name) < 2 or "http://" in name.lower() or "https://" in name.lower():
+    return JSONResponse({"ok": False, "error": "invalid_name"}, status_code=400)
+if "@" not in email or email in bad_emails or email.endswith("@example.com"):
+    return JSONResponse({"ok": False, "error": "invalid_email"}, status_code=400)
+if msg and len(msg) > 1000:
+    msg = msg[:1000]
 
     # Append to CSV (creates file if missing)
     file_exists = os.path.isfile(LEADS_PATH)
