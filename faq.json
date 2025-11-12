@@ -35,8 +35,6 @@
     "q": ["specials", "discounts", "promo"],
     "a": "Ask about first-time client specials and bundle discounts for regular service."
   },
-
-  // ---- NEW 5 INTENTS ----
   {
     "q": ["same day", "today", "soonest", "how fast", "urgent"],
     "a": "Often yes—same-day or next-day is possible depending on route openings. Tell me your location and ideal time and I’ll check the first available slot."
